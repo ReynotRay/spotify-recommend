@@ -104,14 +104,6 @@ Spotify.prototype.search = function(name) {
     });
     ajax.done(this.onSearchDone.bind(this));
 };
-
-// Spotify.protytpe.relatedArtist = function(related){
-//     var ajax = $.ajax('/search/' + name, {
-//         type: 'GET',
-//         dataType: 'json'
-//     });
-//     ajax.done(this.onSearchDone.bind(this));
-// };
 Spotify.prototype.onSearchDone = function(artist) {
     var result = $(this.artistTemplate(artist));
     this.result.empty().append(result);
@@ -129,7 +121,7 @@ $(document).ready(function() {
         </form>
         <div id="result">
         </div>
-
+        
 
         <script id="artist-template" type="text/x-handlebars-template">
             <div>
@@ -161,6 +153,7 @@ $(document).ready(function() {
                                 {{/each}}
                             </ul>
                         </div>
+                        <div id="relatedResults"></div>
                     </div>
                     {{/each}}
                 </div>

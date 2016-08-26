@@ -1,43 +1,50 @@
+
 var unirest = require('unirest');
 var express = require('express');
 var events = require('events');
 
-var getFromApi = function (endpoint, args) {
-  var emitter = new events.EventEmitter();
-  // GET https://api.spotify.com/v1/artists/{id}/related-artists
-  unirest.get('https://api.spotify.com/v1/' + endpoint)
-    .qs(args)
-    .end(function (response) {
-      if (response.ok) {
-        emitter.emit('end', response.body);
-      } else {
-        emitter.emit('error', response.code);
-      }
-    });
-  return emitter;
+var getFromApi = function(endpoint, args) {
+    var emitter = new events.EventEmitter();
+    unirest.get('https://api.spotify.com/v1/' + endpoint)
+           .qs(args)
+           .end(function(response) {
+                if (response.ok) {
+                    emitter.emit('end', response.body);
+                }
+                else {
+                    emitter.emit('error', response.code);
+                }
+            });
+    return emitter;
 };
 
 var app = express();
 app.use(express.static('public'));
 
-app.get('/search/:name', function (req, res) {
-  var searchReq = getFromApi('search', {
-    q: req.params.name,
-    limit: 4,
-    type: 'artist'
-  });
+app.get('/search/:name', function(req, res) {
+  var artist;
+    var searchReq = getFromApi('search', {
+        q: req.params.name,
+        limit: 1,
+        type: 'artist'
+    });
+  
+    searchReq.on('end', function(item) {
+        var artist = item.artists.items[0];
 
-  searchReq.on('end', function (item) {
-    var artist = item.artists.items[0];
+        //my new code
+        console.log(artist.id);
+        var relatedArtist = getFromApi('artists/' + artist.id + '/related-artists');
+        relatedArtist.on('end', function addRelated (listArtist) {
+        artist.related = listArtist.artists;
+        console.log(artist.related);
+        //had to be moved to the end
+        res.json(artist);
+      });
+    });  
 
-    console.log(artist.id);
-
-    res.json(artist);
-  });
-
-  searchReq.on('error', function (code) {
-    res.sendStatus(code);
-  });
-});
-
+        searchReq.on('error', function(code) {
+        res.sendStatus(code);
+    });
+   });
 app.listen(8080);
